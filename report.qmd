@@ -1,0 +1,167 @@
+---
+title: "Analysis of World Development Indicators"
+author: "Sissi Li"
+date: 2026/2/20
+format:
+  html: default
+  pdf: default
+bibliography: references.bib
+---
+
+## Q2:Load the Data
+
+```{r}
+
+df <- read.csv("wdi.csv")
+
+```
+
+### Q3: Conduct exploratory data analysis on at least three indicators of your choice. Summarise your findings in markdown sections. Show your code and results.
+
+Indicator 1: life_expectancy
+```{r}
+summary(df$life_expectancy)
+```
+
+Indicator 2: unemployment_rate
+```{r}
+summary(df$unemployment_rate)
+```
+
+Indicator 3: gdp_per_capita
+```{r}
+summary(df$gdp_per_capita)
+```
+
+```{r}
+sd(df$life_expectancy, na.rm = TRUE)
+sd(df$unemployment_rate, na.rm = TRUE)
+sd(df$gdp_per_capita, na.rm = TRUE)
+```
+
+```{r}
+cor(df[, c("life_expectancy",
+           "unemployment_rate",
+           "gdp_per_capita")],
+    use = "complete.obs")
+```
+
+Summary: 
+Life expectancy ranges from 18.82 to 85.75 years, with a mean of 73.11 and a median of 74.16, suggesting a fairly symmetric distribution centered in the low-to-mid 70s. The interquartile range (67.79 to 78.53) indicates that most countries cluster within a relatively narrow band. The standard deviation of 7.94 years suggests moderate dispersion across countries. Overall, life expectancy appears relatively stable compared to the other indicators.
+
+Unemployment rates vary substantially, ranging from 0.13% to 36.47%. The mean (7.20%) is higher than the median (5.34%), indicating a right-skewed distribution, likely driven by countries with very high unemployment levels. The standard deviation is 5.85 percentage points, reflecting notable cross-country variation. There are 31 missing observations, which should be considered when interpreting results.
+
+GDP per capita shows extremely wide variation, from $303 to $226,052, with a median of $7,656 and a much larger mean of $21,143. The large gap between the mean and median, combined with a very high standard deviation (31,040), indicates a strong right-skewed distribution, driven by a small number of very wealthy countries. There are 8 missing observations. This degree of dispersion suggests that a log transformation may be useful in further analysis.
+
+### Q4
+```{r}
+#| fig-cap: "Figure 1: Relationship between GDP per capita and Life Expectancy. Source: World Bank World Development Indicators."
+#| label: fig-gdp
+#| echo: false
+
+library(ggplot2)
+
+ggplot(df, aes(x = gdp_per_capita, y = life_expectancy)) +
+  geom_point(alpha = 0.6) +
+  labs(
+    title = "GDP per Capita and Life Expectancy",
+    x = "GDP per Capita (USD)",
+    y = "Life Expectancy (Years)"
+  ) +
+  theme_minimal()
+```
+
+```{r}
+#| fig-cap: "Figure 2: Distribution of Unemployment Rates by GDP per Capita Group. Countries are split at the sample mean GDP per capita ($21,143). Source: World Bank World Development Indicators."
+#| label: fig-unemp
+#| echo: false
+#| warning: false
+#| message: false
+
+library(dplyr)
+library(ggplot2)
+
+# Remove missing values for relevant variables
+df_clean <- df %>%
+  filter(!is.na(unemployment_rate),
+         !is.na(gdp_per_capita))
+
+# Create GDP groups
+df_clean <- df_clean %>%
+  mutate(gdp_group = ifelse(gdp_per_capita > 21143,
+                            "Above Mean GDP",
+                            "Below Mean GDP"))
+
+# Boxplot
+ggplot(df_clean, aes(x = gdp_group, y = unemployment_rate)) +
+  geom_boxplot(fill = "steelblue", alpha = 0.7) +
+  labs(
+    title = "Unemployment Rate by GDP per Capita Group",
+    x = "GDP per Capita Group",
+    y = "Unemployment Rate (%)"
+  ) +
+  theme_minimal()
+
+```
+
+### Q5
+```{r}
+#| tbl-cap: "Summary statistics of key indicators. Source: World Bank World Development Indicators."
+#| label: tbl-summary
+#| echo: false
+      
+library(dplyr)
+library(knitr)
+
+# Remove rows with NA in any of the three variables
+df_clean <- df %>%
+  filter(!is.na(life_expectancy),
+         !is.na(unemployment_rate),
+         !is.na(gdp_per_capita))
+
+# Create summary table
+summary_table <- data.frame(
+  Variable = c("Life Expectancy",
+               "Unemployment Rate",
+               "GDP per Capita"),
+  
+  Mean = c(mean(df_clean$life_expectancy),
+           mean(df_clean$unemployment_rate),
+           mean(df_clean$gdp_per_capita)),
+  
+  Median = c(median(df_clean$life_expectancy),
+             median(df_clean$unemployment_rate),
+             median(df_clean$gdp_per_capita)),
+  
+  `Std. Dev.` = c(sd(df_clean$life_expectancy),
+                  sd(df_clean$unemployment_rate),
+                  sd(df_clean$gdp_per_capita)),
+  
+  Min = c(min(df_clean$life_expectancy),
+          min(df_clean$unemployment_rate),
+          min(df_clean$gdp_per_capita)),
+  
+  Max = c(max(df_clean$life_expectancy),
+          max(df_clean$unemployment_rate),
+          max(df_clean$gdp_per_capita)),
+  
+  N = c(nrow(df_clean),
+        nrow(df_clean),
+        nrow(df_clean))
+)
+
+kable(summary_table,
+      digits = 2,
+      caption = "Table 1: Summary Statistics of Key Indicators (NA values removed). Source: World Bank World Development Indicators.")
+```
+
+### Q6
+As shown in @fig-gdp,, GDP per capita is positively associated with life expectancy.
+As shown in @fig-unemp, countries with GDP per capita below the sample mean exhibit greater dispersion in unemployment rates compared to countries above the mean.
+Descriptive statistics are presented in @tbl-summary.
+
+### Q7
+Mandel and Liebens @mandel2019gdp show that unemployment is related to GDP.
+Health also plays a significant role in economic growth [@neofytidou2020health].
+
+

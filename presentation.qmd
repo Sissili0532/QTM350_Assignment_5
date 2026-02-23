@@ -1,0 +1,135 @@
+---
+title: "Analysis of World Development Indicators"
+author: "Sissi Li"
+date: 2026-02-20
+format:
+  revealjs:
+    theme: moon
+    slide-number: true
+    transition: fade
+    background-transition: zoom
+    center: true
+    incremental: true
+bibliography: references.bib
+---
+
+```{r}
+df <- read.csv("wdi.csv")
+```
+
+## Descriptive Statistics
+
+-   Life expectancy averages around 73 years
+
+-   Unemployment averages approximately 7%
+
+-   GDP per capita is highly right-skewed
+
+-   Large gap between mean and median GDP per capita
+
+```{r}
+summary(df$life_expectancy)
+summary(df$unemployment_rate)
+summary(df$gdp_per_capita)
+sd(df$life_expectancy, na.rm = TRUE)
+sd(df$unemployment_rate, na.rm = TRUE)
+sd(df$gdp_per_capita, na.rm = TRUE)
+```
+
+```{r}
+cor(df[, c("life_expectancy",
+           "unemployment_rate",
+           "gdp_per_capita")],
+    use = "complete.obs")
+```
+
+## GDP per Capita and Life Expectancy
+
+-   Positive association observed
+
+-   Higher-income countries tend to have longer life expectancy
+
+-   Relationship appears nonlinear (diminishing returns at high GDP
+
+```{r}
+library(ggplot2)
+
+ggplot(df, aes(x = gdp_per_capita, y = life_expectancy)) +
+  geom_point(alpha = 0.6) +
+  labs(
+    x = "GDP per Capita (USD)",
+    y = "Life Expectancy (Years)"
+  ) +
+  theme_minimal()
+```
+
+## Unemployment Patterns by Income Level
+
+-   Countries below mean GDP show greater dispersion
+
+-   Extreme unemployment outliers are more common in lower-income countries
+
+-   Labor market instability appears more pronounced in developing economies
+
+```{r}
+#| fig-width: 10
+#| fig-height: 6
+library(dplyr)
+
+df_clean <- df %>%
+  filter(!is.na(unemployment_rate),
+         !is.na(gdp_per_capita)) %>%
+  mutate(gdp_group = ifelse(gdp_per_capita > mean(gdp_per_capita, na.rm = TRUE),
+                            "Above Mean GDP",
+                            "Below Mean GDP"))
+
+ggplot(df_clean, aes(x = gdp_group, y = unemployment_rate)) +
+  geom_boxplot(fill = "steelblue", alpha = 0.7) +
+  labs(
+    x = "GDP per Capita Group",
+    y = "Unemployment Rate (%)"
+  ) +
+ theme_minimal(base_size = 24)
+```
+
+## Summarizing Table
+
+```{r}
+library(knitr)
+
+df_clean <- df %>%
+  filter(!is.na(life_expectancy),
+         !is.na(unemployment_rate),
+         !is.na(gdp_per_capita))
+
+summary_table <- data.frame(
+  Variable = c("Life Expectancy",
+               "Unemployment Rate",
+               "GDP per Capita"),
+  
+  Mean = c(mean(df_clean$life_expectancy),
+           mean(df_clean$unemployment_rate),
+           mean(df_clean$gdp_per_capita)),
+  
+  Median = c(median(df_clean$life_expectancy),
+             median(df_clean$unemployment_rate),
+             median(df_clean$gdp_per_capita)),
+  
+  `Std. Dev.` = c(sd(df_clean$life_expectancy),
+                  sd(df_clean$unemployment_rate),
+                  sd(df_clean$gdp_per_capita))
+)
+
+kable(summary_table, digits = 2)
+
+```
+
+## Summary
+
+-   Economic development and health outcomes are strongly linked
+
+-   Income distribution across countries is highly unequal
+
+-   Understanding these relationships is essential for policy design
+
+-   Further research could explore causal mechanisms
