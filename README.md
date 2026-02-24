@@ -4,7 +4,7 @@
 https://sissili0532.github.io/QTM350_Assignment_5/report.html
 
 ## RevealJS Presentation
-https://sissili0532.github.io/QTM350_Assignment_5/slides.html
+https://sissili0532.github.io/QTM350_Assignment_5/presentation.html
 
 ## PDF Report
 The PDF version of the report is included in this repository as `report.pdf`.
